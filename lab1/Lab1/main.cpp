@@ -30,29 +30,6 @@ void drawLine(float length)
 	glTranslatef(0, length, 0);
 }
 
-void drawTree(int depth)
-{
-	drawLine(0.1);
-
-	if (depth > 0)
-	{
-
-		glPushMatrix();
-			glRotatef(-45, 0, 0, 1);
-			float left_scale = 0.5;
-			glScalef(left_scale, left_scale, left_scale);
-			drawTree(depth - 1);
-		glPopMatrix();
-
-		glPushMatrix();
-			glRotatef(45, 0, 0, 1);
-			float right_scale = 0.4;
-			glScalef(right_scale, right_scale, right_scale);
-			drawTree(depth - 1);
-		glPopMatrix();
-	}
-}
-
 void AwesomeSpiral(float distance, float angle, float increment, int n_segment)
 {
 	// Feel Free to change the angle to produce a variety of the result.
