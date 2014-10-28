@@ -24,6 +24,7 @@ struct Point {
 int nPt = 0;
 Point ptList[MAXPTNO];
 Point c1List[MAXPTNO];
+Point bezierPts[MAXPTNO];
 
 // Display options
 bool displayControlPoints = true;
@@ -108,6 +109,8 @@ void display(void)
 		}
 	}
 
+
+
 	if(displayControlPoints)
 	{
 
@@ -156,7 +159,7 @@ void display(void)
 			// P[0, 1, 2, 3] = PTSList[3, 4, 5, 6]
 			// p[0, 1, 2, 3] = ptsList[6, 7, 8, 9]
 			if (C1Continuity && j == 1 && i != 3) {
-				pts[j] = c1List[i / 3 -1];
+				pts[j] = c1List[i / 3 - 1];
 			}
 			else {
 				pts[j] = ptList[i - NDEGREE + j];
@@ -167,14 +170,45 @@ void display(void)
 
 		for (int j = 0; j < NLINESEGMENT; j++) // 0, 1, 2, 3, 4, ..., 32
 		{
-			float interval = (float) j / NLINESEGMENT;
+			float interval = (float)j / NLINESEGMENT;
 			Point pt = bezier_curve(pts, interval);
 			glVertex2d(pt.x, pt.y);
+
+
+			// Store this for later
+			int index = NOBJECTONCURVE * ((i / NDEGREE) - 1) + (j / (NLINESEGMENT / NOBJECTONCURVE));
+			bezierPts[index] = pt;
 		}
 	}
 	glEnd();
 
+	if (displayTangentVectors)
+	{
+		for (int i = NDEGREE; i < nPt; i += NDEGREE) // 3, 6, 9, 12, ...
+		{
+			for (int j = 0; j < NLINESEGMENT; j++)
+			{
+				if (j % (NLINESEGMENT / NOBJECTONCURVE) == 0)
+				{
+					int index = NOBJECTONCURVE * ((i / NDEGREE) - 1) + (j / (NLINESEGMENT / NOBJECTONCURVE));
+					
+					glPushMatrix();
+						glTranslatef(bezierPts[index].x, bezierPts[index].y, 0);
+						int dy = bezierPts[index+1].y - bezierPts[index].y;
+						int dx = bezierPts[index+1].x - bezierPts[index].x;
+						
+						float angle = atan(float(dy) / float(dx));
+						
+						glRotatef(angle * (180/3.14), 0, 0, 1);
+						drawRightArrow();
+					glPopMatrix();
 
+				}
+				
+			}
+		}
+
+	}
 	glPopMatrix();
 	glutSwapBuffers ();
 }
