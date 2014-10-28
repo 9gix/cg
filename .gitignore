@@ -5,6 +5,15 @@
 *.suo
 *.user
 *.sln.docstates
+*.vcproj
+*.vcxproj.filters
+*.vcxproj
+*.zip
+*.pdf
+*.sln
+savefile.txt
+readme.txt
+
 
 # Build results
 [Dd]ebug/
