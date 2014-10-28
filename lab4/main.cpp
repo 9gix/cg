@@ -118,17 +118,18 @@ void display(void)
 		glBegin(GL_POINTS);
 		for(int i=0;i<nPt; i++)
 		{
-				glColor3f(0,0,0);
+				
+				if (C1Continuity && (i % 3) == 1 && i >= NDEGREE)
+				{
+					glColor3f(1, 0, 0);
+					glVertex2d(c1List[(i / 3)].x, c1List[(i / 3)].y);
+					glColor3f(0.9, 0.6, 0.1);
+				}
+				else
+				{
+					glColor3f(0, 0, 0);
+				}
 				glVertex2d(ptList[i].x,ptList[i].y);
-		}
-		if (C1Continuity)
-		{
-			for (int i = NDEGREE; i < nPt; i += NDEGREE)
-			{
-				glColor3f(1, 0, 0);
-				glVertex2d(c1List[(i / 3)].x, c1List[(i / 3)].y);
-			}
-
 		}
 		glEnd();
 		glPointSize(1);
@@ -141,7 +142,14 @@ void display(void)
 		glBegin(GL_LINE_STRIP);
 		for (int i = 0; i < nPt; i++)
 		{
-			glVertex2d(ptList[i].x, ptList[i].y);
+			if (C1Continuity && (i % 3) == 1 && i >= NDEGREE)
+			{
+				glVertex2d(c1List[(i / 3)].x, c1List[(i / 3)].y);	
+			}
+			else
+			{
+				glVertex2d(ptList[i].x, ptList[i].y);
+			}
 		}
 		glEnd();
 	}
