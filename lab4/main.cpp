@@ -87,6 +87,60 @@ void drawRightArrow()
 		glVertex2f(95,-5);
 	glEnd();
 }
+void drawLine(float length)
+{
+	glBegin(GL_LINES);
+
+	glVertex2f(0, 0);
+	glVertex2f(0, length);
+
+	glEnd();
+	glTranslatef(0, length, 0);
+}
+
+void AwesomeSpiral(float distance, float angle, float increment, int n_segment)
+{
+	// Feel Free to change the angle to produce a variety of the result.
+	glPushMatrix();
+
+	for (int i = 0; i < n_segment; i++)
+	{
+		float red = (1.0 * i / n_segment);
+		float green = 1 - (1.0 * i / n_segment);
+		float blue = (1.0 * i / n_segment);
+
+		glColor3f(red, green, blue);
+		drawLine(distance);
+		glRotatef(angle - 0.8, 0, 0, 1);
+		distance += increment;
+
+		glPushMatrix();
+		glColor3f(1, green, blue);
+		glRotatef(-angle - 90, 0, 0, 1);
+		drawLine(distance);
+		glPushMatrix();
+		glColor3f(1, green, 0);
+		glRotatef(angle + 90, 0, 0, 1);
+		drawLine(distance);
+		glPopMatrix();
+		glPopMatrix();
+	}
+	glPopMatrix();
+}
+
+
+void drawObject()
+{
+	if (displayTangentVectors)
+	{
+		drawRightArrow();
+	}
+
+	if (displayObjects)
+	{
+		AwesomeSpiral(110, 100.5, 0.05, 50);
+	}
+}
 
 void display(void)
 {
@@ -190,7 +244,7 @@ void display(void)
 	}
 	glEnd();
 
-	if (displayTangentVectors)
+	if (displayTangentVectors || displayObjects)
 	{
 		for (int i = NDEGREE; i < nPt; i += NDEGREE) // 3, 6, 9, 12, ...
 		{
@@ -208,15 +262,16 @@ void display(void)
 						float angle = atan(float(dy) / float(dx));
 						
 						glRotatef(angle * (180/3.14), 0, 0, 1);
-						drawRightArrow();
+						drawObject();
+						
 					glPopMatrix();
 
 				}
 				
 			}
 		}
-
 	}
+
 	glPopMatrix();
 	glutSwapBuffers ();
 }
