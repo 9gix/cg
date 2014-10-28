@@ -23,6 +23,7 @@ struct Point {
 // Storage of control points
 int nPt = 0;
 Point ptList[MAXPTNO];
+Point c1List[MAXPTNO];
 
 // Display options
 bool displayControlPoints = true;
@@ -90,6 +91,23 @@ void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
+
+
+	if (C1Continuity)
+	{
+		for (int i = NDEGREE; i < nPt; i += NDEGREE)
+		{
+
+			Point tmp;
+			//cout << ptList[i].x << " " << ptList[i].y;
+			//cout << ptList[i-1].x << " " << ptList[i-1].y;
+			tmp.x = (ptList[i].x - ptList[i - 1].x) + ptList[i].x;
+			tmp.y = (ptList[i].y - ptList[i - 1].y) + ptList[i].y;
+			c1List[(i / 3)] = tmp;
+
+		}
+	}
+
 	if(displayControlPoints)
 	{
 
@@ -100,9 +118,17 @@ void display(void)
 				glColor3f(0,0,0);
 				glVertex2d(ptList[i].x,ptList[i].y);
 		}
+		if (C1Continuity)
+		{
+			for (int i = NDEGREE; i < nPt; i += NDEGREE)
+			{
+				glColor3f(1, 0, 0);
+				glVertex2d(c1List[(i / 3)].x, c1List[(i / 3)].y);
+			}
+
+		}
 		glEnd();
 		glPointSize(1);
-
 	}
 
 	if(displayControlLines)
@@ -119,60 +145,35 @@ void display(void)
 
 
 
-	if (C1Continuity)
+	glBegin(GL_LINE_STRIP);
+	glColor3f(0, 0, 1);
+	for (int i = NDEGREE; i < nPt; i += NDEGREE) // 3, 6, 9, 12, ...
 	{
-
-		glBegin(GL_LINE_STRIP);
-		glColor3f(0, 0, 1);
-		for (int i = NDEGREE; i < nPt; i += NDEGREE)
+		Point pts[CTRL_POINT];
+		for (int j = 0; j < CTRL_POINT; j++) // 0, 1, 2, 3
 		{
-
-			
-			if (i % 3 == 1)
-			{
-				// let pts start from index 0
-				// p[4] = c1(p[4]-2, p[4]-1)
-				// p[7] = c1(p[7]-2, p[7]-1)
-				// p[10] = c1(p[10] - 2, p[10] - 1)
-
+			// p[0, 1, 2, 3] = ptsList[0, 1, 2, 3]
+			// P[0, 1, 2, 3] = PTSList[3, 4, 5, 6]
+			// p[0, 1, 2, 3] = ptsList[6, 7, 8, 9]
+			if (C1Continuity && j == 1 && i != 3) {
+				pts[j] = c1List[i / 3 -1];
 			}
-
-			Point pts[CTRL_POINT];
-			for (int j = 0; j < CTRL_POINT; j++)
-			{
+			else {
 				pts[j] = ptList[i - NDEGREE + j];
 			}
-
-
-			for (int j = 0; j < NLINESEGMENT; j++)
-			{
-				Point pt = bezier_curve(pts, (float)j / NLINESEGMENT);
-				glVertex2d(pt.x, pt.y);
-			}
 		}
-		glEnd();
-	}
-	else
-	{
-		glBegin(GL_LINE_STRIP);
-		glColor3f(0, 0, 1);
-		for (int i = NDEGREE; i < nPt; i += NDEGREE)
+
+
+
+		for (int j = 0; j < NLINESEGMENT; j++) // 0, 1, 2, 3, 4, ..., 32
 		{
-			Point pts[CTRL_POINT];
-			for (int j = 0; j < CTRL_POINT; j++)
-			{
-				pts[j] = ptList[i - NDEGREE + j];
-			}
-
-
-			for (int j = 0; j < NLINESEGMENT; j++)
-			{
-				Point pt = bezier_curve(pts, (float)j / NLINESEGMENT);
-				glVertex2d(pt.x, pt.y);
-			}
+			float interval = (float) j / NLINESEGMENT;
+			Point pt = bezier_curve(pts, interval);
+			glVertex2d(pt.x, pt.y);
 		}
-		glEnd();
 	}
+	glEnd();
+
 
 	glPopMatrix();
 	glutSwapBuffers ();
