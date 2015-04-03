@@ -81,7 +81,6 @@ class VertexPairPriorityQueue(object):
                 if (edge.cost != cost):
                     self.add(edge)
                 else:
-                    # print(edge.cost)
                     del self.entry_finder[edge.vertex_pair]
                     return edge
         raise KeyError('Queue is Empty')
@@ -166,10 +165,7 @@ class Mesh(object):
         self.pq.add(edge)
 
 
-    def _contract(self, edge):
-        """Return v1 and remove v2
-        relocate v1 to its optimal position
-        """
+    def _collapseEdge(self, edge):
 
         # v1 to be kept, v2 to be removed
 
@@ -211,7 +207,8 @@ class Mesh(object):
                     v2_edge.vertex_pair = vp
                     v1.edges[vertex_pair] = v2_edge
 
-                    # BUG: Recomputing Edge Cost deform the meshes
+                    # BUG: Recomputing Edge Cost causes a deformation in the meshes
+                    # Need to Inspect more details on the computation of Cost
                     # self._recomputeEdge(v2_edge)
         return v1
 
@@ -248,27 +245,31 @@ class Mesh(object):
                 print("Unable to reduce Further")
                 break
             else:
-                v = self._contract(edge)
+                v = self._collapseEdge(edge)
         else:
             print("Mesh Simplified Successful")
         print("Face Reduced to: ", len(self.face_list))
 
 
 def main():
-    print("""
-======================
-  Mesh Simplification 
-======================
-        """)
-    if len(sys.argv) != 4:
-        print("Parameters: <input-file> <output-file> <face-count>")
-    else:
-        print(sys.argv)
-        mesh = Mesh()
-        mesh.load(sys.argv[1])
-        mesh.simplify(int(sys.argv[3]))
-        mesh.save(sys.argv[2])
+    mesh = Mesh()
+    mesh.load(sys.argv[1])
+    mesh.simplify(int(sys.argv[3]))
+    mesh.save(sys.argv[2])
 
 
 if __name__ == '__main__':
-    main()
+
+    print("""
+
+            ======================
+              Mesh Simplification 
+            ======================
+
+        """)
+
+
+    if len(sys.argv) != 4:
+        print("Parameters: <input-file> <output-file> <face-count>")
+    else:
+        main()
