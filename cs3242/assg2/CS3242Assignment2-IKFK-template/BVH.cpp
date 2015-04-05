@@ -1,5 +1,5 @@
 #include "BVH.h"
-
+#include "glm/gtx/string_cast.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -257,7 +257,11 @@ void BVH::matrixMoveJoint(JOINT* joint, float* mdata, float scale)
         matrixMoveJoint(*child, mdata,scale);
 }
 
-
+static glm::mat4 rigidToMat4(RigidTransform t) {
+	glm::mat4 translation_mat = glm::translate(glm::mat4(1.0f), t.translation);
+	glm::mat4 rotation_mat = glm::mat4_cast(t.quaternion);
+	return translation_mat * rotation_mat;
+}
 void BVH::matrixMoveTo(unsigned frame, float scale)
 {
     // we calculate motion data's array start index for a frame
@@ -304,23 +308,28 @@ void BVH::quaternionMoveJoint(JOINT* joint, float* mdata, float scale)
 
 		case X_ROTATION:
         {            
-			
+			joint->transform.quaternion = glm::rotate(joint->transform.quaternion, value, glm::vec3(1, 0, 0));
 			break;
         }
 		case Y_ROTATION:
-        {			
+        {	
+			joint->transform.quaternion = glm::rotate(joint->transform.quaternion, value, glm::vec3(0, 1, 0));
 			break;
         }
 		case Z_ROTATION:        
-        {			
+        {	
+			joint->transform.quaternion = glm::rotate(joint->transform.quaternion, value, glm::vec3(0, 0, 1));
 			break;
         }
 		}
 	}
 
+
     // apply parent's transfomation matrix to this joint to make the transformation global
     if (joint->parent != NULL) {
-		joint->transform.translation = joint->parent->transform.translation + joint->transform.translation;
+		glm::vec3 rotation_vector = joint->parent->transform.quaternion * joint->transform.translation;
+		joint->transform.translation = joint->parent->transform.translation + rotation_vector; 
+		joint->transform.quaternion = joint->parent->transform.quaternion * joint->transform.quaternion;
     }
 
     // do the same to all children

@@ -381,7 +381,8 @@ void BVHAnimator::renderMannequin(int frame, float scale) {
     //_bvh->matrixMoveTo(frame, scale);
     // NOTE: you can use matrix or quaternion to calculate the transformation
 
-
+	renderJointsQuaternion(frame, scale);
+	renderSkeleton(_bvh->getRootJoint(), _bvh->getMotionDataPtr(frame), scale);
 }
 
 void BVHAnimator::solveLeftArm(int frame_no, float scale, float x, float y, float z)
