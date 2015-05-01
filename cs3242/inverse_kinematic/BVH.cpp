@@ -327,8 +327,8 @@ void BVH::quaternionMoveJoint(JOINT* joint, float* mdata, float scale)
 
     // apply parent's transfomation matrix to this joint to make the transformation global
     if (joint->parent != NULL) {
-		glm::vec3 rotation_vector = joint->parent->transform.quaternion * joint->transform.translation;
-		joint->transform.translation = joint->parent->transform.translation + rotation_vector; 
+		glm::vec3 rotated_vector = glm::rotate(joint->parent->transform.quaternion, joint->transform.translation);
+		joint->transform.translation = joint->parent->transform.translation + rotated_vector;
 		joint->transform.quaternion = joint->parent->transform.quaternion * joint->transform.quaternion;
     }
 

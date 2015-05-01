@@ -1,5 +1,5 @@
 #include "BVHAnimator.h"
-
+#include "Eigen/Dense"
 #include <ctime>
 
 #include <iostream>
@@ -381,8 +381,108 @@ void BVHAnimator::renderMannequin(int frame, float scale) {
     //_bvh->matrixMoveTo(frame, scale);
     // NOTE: you can use matrix or quaternion to calculate the transformation
 
-	renderJointsQuaternion(frame, scale);
 	renderSkeleton(_bvh->getRootJoint(), _bvh->getMotionDataPtr(frame), scale);
+	std::vector<JOINT*> jointList = _bvh->getJointList();
+	for (std::vector<JOINT*>::iterator it = jointList.begin(); it != jointList.end(); it++)
+	{
+		JOINT* joint = (*it);
+		glPushMatrix();
+
+		// convert quaternion and translation into matrix for rendering        
+		glm::mat4 mat = rigidToMat4((*it)->transform);
+		GLdouble m[16];
+		mat4ToGLdouble16(m, mat);
+		glMultMatrixd(m);
+
+		float r, g, b; r = g = b = 1;
+		float xScale, yScale, zScale; xScale = yScale = zScale = 1;
+		
+		if (joint == head) {
+			glPushMatrix();
+			glScalef(1, 2, 1);
+			color[0] = 1; color[1] = 0.7; color[2] = 0.1;
+			renderSphere(0, 0, 0, 0.1);
+			glPopMatrix();
+		}
+		else if (joint == neck) {
+			glPushMatrix();
+			color[0] = 0.1; color[1] = 0.1; color[2] = 0.3;
+			renderSphere(0, 0, 0, 0.02);
+			glPopMatrix();
+		}
+		else if (joint == chest) {
+			glPushMatrix();
+			color[0] = 0.3; color[1] = 0.5; color[2] = 0.5;
+			glScalef(1.1, 2.5, 0.5);
+			glutSolidCube(0.2);
+			glPopMatrix();
+		}
+		else if (joint == spine) {
+			glPushMatrix();
+			color[0] = 1; color[1] = 0.8; color[2] = 1;
+			renderSphere(0, 0, 0, 0.05);
+			glPopMatrix();
+		}
+		else if (joint == hip) {
+			glPushMatrix();
+			color[0] = 0.9; color[1] = 0.3; color[2] = 0.5;
+			glScalef(1.5, 0.4, 0.5);
+			renderSphere(0, 0, 0, 0.05);
+			glPopMatrix();
+		}
+		else if (joint == lshldr || joint == rshldr) {
+			glPushMatrix();
+			color[0] = 0.3; color[1] = 0.5; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.15);
+			glPopMatrix();
+		}
+		else if (joint == larm || joint == rarm) {
+			glPushMatrix();
+			color[0] = 0.5; color[1] = 0.3; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.12);
+			glPopMatrix();
+		}
+		else if (joint == lforearm || joint == rforearm) {
+			glPushMatrix();
+			color[0] = 0.8; color[1] = 0.6; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.09);
+			glPopMatrix();
+		}
+		else if (joint == lhand || joint == rhand) {
+			glPushMatrix();
+			color[0] = 0.4; color[1] = 0.3; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.05);
+			glPopMatrix();
+		}
+		else if (joint == lupleg || joint == rupleg) {
+			glPushMatrix();
+			color[0] = 0.3; color[1] = 0.3; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.1);
+			glPopMatrix();
+		}
+		else if (joint == lleg || joint == rleg) {
+			glPushMatrix();
+			color[0] = 0.3; color[1] = 1; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.08);
+			glPopMatrix();
+		}
+		else if (joint == lfoot || joint == rfoot) {
+			glPushMatrix();
+			color[0] = 0.3; color[1] = 0.3; color[2] = 0.0;
+			renderSphere(0, 0, 0, 0.02);
+			glPopMatrix();
+		}
+		else if (joint == ltoe || joint == rtoe) {
+			glPushMatrix();
+			color[0] = 0.3; color[1] = 0.3; color[2] = 0.5;
+			renderSphere(0, 0, 0, 0.05);
+			glPopMatrix();
+		}
+
+		
+
+		glPopMatrix();
+	}
 }
 
 void BVHAnimator::solveLeftArm(int frame_no, float scale, float x, float y, float z)
@@ -410,16 +510,65 @@ void BVHAnimator::solveLeftArm(int frame_no, float scale, float x, float y, floa
     clock_t start_time = clock();
 
     // -------------------------------------------------------
-    // TODO: [Part 3] - Inverse Kinematics
+    // [Part 3] - Inverse Kinematics
     //
-    // Put your code below
+    // Discussion of the Algorithms with Gabriella Michelle
     // -------------------------------------------------------
 
+	float xDiff = lforearm->offset.x * scale - larm->offset.x * scale;
+	float yDiff = lforearm->offset.y * scale - larm->offset.y * scale;
+	float zDiff = lforearm->offset.z * scale - larm->offset.z * scale;
+	float armLen = sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
 
+	xDiff = lhand->offset.x * scale - lforearm->offset.x * scale;
+	yDiff = lhand->offset.y * scale - lforearm->offset.y * scale;
+	zDiff = lhand->offset.z * scale - lforearm->offset.z * scale;
+	float handLen = sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
 
+	float limitErr = 1;
+	int iter = 10; 
+	while (iter > 0) { // Iteratively Validates the Delta between End Point and Goal.
+		glm::vec4 curPos = (lhand->matrix) * glm::vec4(_bvh->getRootJoint()->offset.x, _bvh->getRootJoint()->offset.y, _bvh->getRootJoint()->offset.z, 1);
 
+		// Analyticial Jacobian Matrix (Derivation of the FK)
+		Eigen::MatrixXf j = Eigen::MatrixXf::Zero(3, 4);
+		j(0, 0) = 0;
+		j(0, 1) = armLen * cos(*LArz) * cos(*LAry) + handLen * cos(*LArz) * cos(*LAry + *LFAry);
+		j(0, 2) = -sin(*LArz) * armLen * sin(*LAry) - sin(*LArz) * handLen * sin(*LAry + *LFAry);
+		j(0, 3) = handLen * cos(*LArz) * cos(*LAry + *LFAry);
 
+		j(1, 0) = -armLen * sin(*LArx) * sin(*LArz) - handLen * sin(*LArx) * sin(*LArz);
+		j(1, 1) = 0;
+		j(1, 2) = (armLen + handLen) * cos(*LArx) * cos(*LArz);
+		j(1, 3) = 0;
 
+		j(2, 0) = cos(*LArx) * (armLen * cos(*LAry) + handLen * cos(*LAry + *LFAry));
+		j(2, 1) = sin(*LArx) * (armLen * -sin(*LAry) - handLen * sin(*LAry + *LFAry));
+		j(2, 2) = 0;
+		j(2, 3) = -handLen * sin(*LArx) * sin(*LAry + *LFAry);
+
+		// Pseudo inverse of Jacobian
+		Eigen::MatrixXf jacobianPseudoInverse = j.transpose() * (j * j.transpose()).inverse();
+
+		// Compute Changes between the Goal and the End points
+		Eigen::VectorXf dP = Eigen::VectorXf::Zero(3, 1);
+		dP(0) = x - curPos[0];
+		dP(1) = y - curPos[1];
+		dP(2) = z - curPos[2];
+
+		// Computing Changes in DOFs
+		Eigen::VectorXf theta = jacobianPseudoInverse * dP;
+
+		// Applying a small Step of theta 
+		*LArx += theta(0);
+		*LAry += theta(1);
+		*LArz += theta(2);
+		*LFAry += theta(3);
+
+		cout << theta << endl;
+
+		iter--;
+	}
 
     // ----------------------------------------------------------
     // Do not touch
