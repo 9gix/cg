@@ -25,6 +25,6 @@ void main( void )
 
 	ecPosition = vec3(gl_ModelViewMatrix * gl_Vertex);
 	ecNormal = gl_NormalMatrix * gl_Normal;
-	ecTangent = Tangent;
+	ecTangent = gl_NormalMatrix * Tangent;
 
 }

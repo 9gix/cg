@@ -101,7 +101,7 @@ void main()
 		vec3 specular = vec3(gl_FrontLightProduct[0].specular) * vec3(pow(clamp(dot(ecNNormal, halfwayVector), 0.0, 1.0), 4 * gl_FrontMaterial.shininess));
 		specular = clamp(specular, 0.0, 1.0);
 
-		vec3 phongLighting = vec3(gl_BackLightModelProduct.sceneColor) * woods + ambient + diffuse + specular;
+		vec3 phongLighting = vec3(gl_FrontLightModelProduct.sceneColor) * woods + ambient + diffuse + specular;
 		gl_FragColor = vec4(phongLighting,1);
     }
     else
