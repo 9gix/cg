@@ -115,7 +115,7 @@ Color Raytrace::TraceRay( const Ray &ray, const Scene &scene,
 
 
 	////////////////////////////////////
-	result = nearestHitRec.mat_ptr->k_d; // REMOVE THIS LINE AFTER YOU HAVE FINISHED CODE BELOW.
+	// result = nearestHitRec.mat_ptr->k_d; // REMOVE THIS LINE AFTER YOU HAVE FINISHED CODE BELOW.
 	////////////////////////////////////
 
 
@@ -125,7 +125,24 @@ Color Raytrace::TraceRay( const Ray &ray, const Scene &scene,
     //***********************************************
     //*********** WRITE YOUR CODE HERE **************
     //***********************************************
-
+    for (int i = 0; i < scene.numPtLights; ++i) {
+        bool isShadowed = false;
+        PointLightSource light = scene.ptLight[i];
+        Vector3d L = light.position - nearestHitRec.p;
+        double t_max = L.length();
+        L.makeUnitVector();
+        if (hasShadow) {
+            Ray shadow(nearestHitRec.p, L);
+            int j = 0;
+            while (j < scene.numSurfaces && !isShadowed) {
+                isShadowed = scene.surfacep[j]->shadowHit(shadow, DEFAULT_TMIN, t_max);
+                ++j;
+            }
+        }
+        if (!isShadowed) {
+            result += computePhongLighting(L, N, V, *nearestHitRec.mat_ptr, light);
+        }
+    }
 
 
 
@@ -135,8 +152,7 @@ Color Raytrace::TraceRay( const Ray &ray, const Scene &scene,
 	//***********************************************
     //*********** WRITE YOUR CODE HERE **************
     //***********************************************
-
-
+    result += scene.amLight.I_a * nearestHitRec.mat_ptr->k_a;
 
 
 
@@ -145,11 +161,13 @@ Color Raytrace::TraceRay( const Ray &ray, const Scene &scene,
 	//***********************************************
     //*********** WRITE YOUR CODE HERE **************
     //***********************************************
-
-
-
-
-
-
-	return result;
+    if (reflectLevels <= 0) {
+        return result;
+    } else {
+        Vector3d reflectionDir = mirrorReflect(V, N);
+        Ray reflectionRay(nearestHitRec.p, reflectionDir);
+        return result + (
+            nearestHitRec.mat_ptr->k_rg * 
+            TraceRay(reflectionRay, scene, reflectLevels - 1, hasShadow));
+    }
 }

@@ -75,4 +75,3 @@ bool Sphere::shadowHit( const Ray &r, double tmin, double tmax ) const
     }
     return t0 <= tmax;
 }
-
