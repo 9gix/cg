@@ -120,7 +120,7 @@ int main()
 // Render Scene 1.
 
 	printf( "Render Scene 1...\n" );
-	//RenderImage( "out1.png", scene1, reflectLevels1, hasShadow1 );
+	RenderImage( "out1.png", scene1, reflectLevels1, hasShadow1 );
 	printf( "Image completed.\n" );
 
 
