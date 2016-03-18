@@ -120,11 +120,10 @@ int main()
 // Render Scene 1.
 
 	printf( "Render Scene 1...\n" );
-	RenderImage( "out1.png", scene1, reflectLevels1, hasShadow1 );
+	//RenderImage( "out1.png", scene1, reflectLevels1, hasShadow1 );
 	printf( "Image completed.\n" );
 
 
-/*
 // Define Scene 2.
 
 	Scene scene2;
@@ -135,7 +134,7 @@ int main()
 	printf( "Render Scene 2...\n" );
 	RenderImage( "out2.png", scene2, reflectLevels2, hasShadow2 );
 	printf( "Image completed.\n" );
-*/
+
 
 	printf( "All done.\n" );
 	return 0;
@@ -270,6 +269,95 @@ void DefineScene2( Scene &scene, int imageWidth, int imageHeight )
     //***********************************************
     //*********** WRITE YOUR CODE HERE **************
     //***********************************************
+    scene.backgroundColor = Color(0.2f, 0.3f, 0.5f);
 
+    scene.amLight.I_a = Color(1.0f, 1.0f, 1.0f) * 0.25f;
+
+    // Define materials.
+
+    scene.numMaterials = 5;
+    scene.material = new Material[scene.numMaterials];
+
+    // Light red.
+    scene.material[0].k_d = Color(0.8f, 0.4f, 0.4f);
+    scene.material[0].k_a = scene.material[0].k_d;
+    scene.material[0].k_r = Color(0.8f, 0.8f, 0.8f) / 1.5f;
+    scene.material[0].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
+    scene.material[0].n = 64.0f;
+
+    // Light green.
+    scene.material[1].k_d = Color(0.4f, 0.8f, 0.4f);
+    scene.material[1].k_a = scene.material[0].k_d;
+    scene.material[1].k_r = Color(0.8f, 0.8f, 0.8f) / 1.5f;
+    scene.material[1].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
+    scene.material[1].n = 64.0f;
+
+    // Light blue.
+    scene.material[2].k_d = Color(0.4f, 0.4f, 0.8f) * 0.9f;
+    scene.material[2].k_a = scene.material[0].k_d;
+    scene.material[2].k_r = Color(0.8f, 0.8f, 0.8f) / 1.5f;
+    scene.material[2].k_rg = Color(0.8f, 0.8f, 0.8f) / 2.5f;
+    scene.material[2].n = 64.0f;
+
+    // Yellow.
+    scene.material[3].k_d = Color(0.6f, 0.6f, 0.2f);
+    scene.material[3].k_a = scene.material[0].k_d;
+    scene.material[3].k_r = Color(0.8f, 0.8f, 0.8f) / 1.5f;
+    scene.material[3].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
+    scene.material[3].n = 64.0f;
+
+    // Gray.
+    scene.material[4].k_d = Color(0.6f, 0.6f, 0.6f);
+    scene.material[4].k_a = scene.material[0].k_d;
+    scene.material[4].k_r = Color(0.6f, 0.6f, 0.6f);
+    scene.material[4].k_rg = Color(0.8f, 0.8f, 0.8f) / 3.0f;
+    scene.material[4].n = 128.0f;
+
+
+    // Define point light sources.
+
+    scene.numPtLights = 2;
+    scene.ptLight = new PointLightSource[scene.numPtLights];
+
+    scene.ptLight[0].I_source = Color(1.0f, 1.0f, 1.0f) * 0.6f;
+    scene.ptLight[0].position = Vector3d(100.0, 120.0, 10.0);
+
+    scene.ptLight[1].I_source = Color(1.0f, 1.0f, 1.0f) * 0.6f;
+    scene.ptLight[1].position = Vector3d(5.0, 80.0, 60.0);
+
+
+    // Define surface primitives.
+
+    scene.numSurfaces = 36;
+    scene.surfacep = new SurfacePtr[scene.numSurfaces];
+
+
+    scene.surfacep[0] = new Plane(0.0, 1.0, 0.0, 0.0, &(scene.material[2])); // Horizontal plane.
+    scene.surfacep[1] = new Plane(1.0, 0.0, 0.0, 0.0, &(scene.material[4])); // Left vertical plane.
+    scene.surfacep[2] = new Plane(0.0, 0.0, 1.0, 0.0, &(scene.material[4])); // Right vertical plane.
+
+    scene.surfacep[3] = new Triangle(Vector3d(50.0, 20.0, 80.0), Vector3d(40.0, 1.0, 90.0),
+        Vector3d(60.0, 1.0, 85.0), &(scene.material[3]));
+    scene.surfacep[4] = new Triangle(Vector3d(50.0, 20.0, 80.0), Vector3d(60.0, 1.0, 85.0),
+        Vector3d(50.0, 1.0, 70.0), &(scene.material[3]));
+    scene.surfacep[5] = new Triangle(Vector3d(50.0, 20.0, 80.0), Vector3d(50.0, 1.0, 70.0),
+        Vector3d(40.0, 1.0, 90.0), &(scene.material[3]));
+
+    // 3x Spiral 
+    for (int j = 0; j < 3; ++j) {
+
+        // single spiral cycle
+        for (int i = 0; i < 10; ++i) {
+            double a = sin((i / 10.0) * 2* 3.14);
+            double b = cos((i / 10.0) * 2 * 3.14);
+            scene.surfacep[(j*10)+(6+i)] = new Sphere(Vector3d(10 + 30 * j + 30 * (i/10.0), 30 + 20*a, 30 + 20*b), 4.0, &(scene.material[i % 5])); // Small sphere.
+        }
+    }
+
+    // Define camera.
+
+    scene.camera = Camera(Vector3d(150.0, 120.0, 150.0), Vector3d(45.0, 22.0, 55.0), Vector3d(0.0, 1.0, 0.0),
+        (-1.0 * imageWidth) / imageHeight, (1.0 * imageWidth) / imageHeight, -1.0, 1.0, 3.0,
+        imageWidth, imageHeight);
 
 }

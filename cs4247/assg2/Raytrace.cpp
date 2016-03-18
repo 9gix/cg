@@ -113,12 +113,6 @@ Color Raytrace::TraceRay( const Ray &ray, const Scene &scene,
 
 	Color result( 0.0f, 0.0f, 0.0f );	// The result will be accumulated here.
 
-
-	////////////////////////////////////
-	// result = nearestHitRec.mat_ptr->k_d; // REMOVE THIS LINE AFTER YOU HAVE FINISHED CODE BELOW.
-	////////////////////////////////////
-
-
 // Add to result the phong lighting contributed by each point light source.
 // Compute shadow if hasShadow is true.
 
@@ -161,13 +155,12 @@ Color Raytrace::TraceRay( const Ray &ray, const Scene &scene,
 	//***********************************************
     //*********** WRITE YOUR CODE HERE **************
     //***********************************************
-    if (reflectLevels <= 0) {
-        return result;
-    } else {
+    if (reflectLevels > 0) {
         Vector3d reflectionDir = mirrorReflect(V, N);
         Ray reflectionRay(nearestHitRec.p, reflectionDir);
         return result + (
             nearestHitRec.mat_ptr->k_rg * 
             TraceRay(reflectionRay, scene, reflectLevels - 1, hasShadow));
     }
+    return result;
 }
