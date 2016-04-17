@@ -40,7 +40,7 @@ static const float maxGathererQuadEdgeLength = 30.0f;
 
 // This value tells when to terminate the progressive refinement radiosity computation.
 // It sets the maximum number of iterations.
-static const int maxIterations = 250;
+static const int maxIterations = 10;
 
 
 /**********************************************************
@@ -254,10 +254,11 @@ static void SetupHemicubeTopView( const QM_ShooterQuad *shooterQuad, float nearP
     glViewport(0, 0, winWidthHeight, winWidthHeight);
 
     glMatrixMode(GL_PROJECTION);
-    glOrtho(-nearPlane, nearPlane, -nearPlane, nearPlane, nearPlane, farPlane);
+    glLoadIdentity();
+    glFrustum(-nearPlane, nearPlane, -nearPlane, nearPlane, nearPlane, farPlane);
 
     float tangent[3];
-    VecDiff(tangent, shooterQuad->centroid, shooterQuad->v[0]);
+    VecDiff(tangent, shooterQuad->v[0], shooterQuad->v[1]);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -282,7 +283,8 @@ static void SetupHemicubeSideView( int face, const QM_ShooterQuad *shooterQuad, 
     glViewport(0, 0, winWidthHeight, winWidthHeight/2);
 
     glMatrixMode(GL_PROJECTION);
-    glOrtho(-nearPlane, nearPlane, 0, nearPlane, nearPlane, farPlane);
+    glLoadIdentity();
+    glFrustum(-nearPlane, nearPlane, 0, nearPlane, nearPlane, farPlane);
 
     float tangent[3];
     switch (face) {
@@ -322,15 +324,13 @@ static void UpdateRadiosities( const QM_Model *m, const float shotPower[3], cons
         /**********************************************************
          ****************** WRITE YOUR CODE HERE ******************
          **********************************************************/
-        
-        for (int i = 0; i < 3; ++i) 
-        {
-            m->gatherers[g]->radiosity[i] += (m->surfaces->reflectivity[i] * shotPower[i] * deltaFormFactors[i]);
+        float rgb[3];
+        for (int j = 0; j < 3; ++j) {
+            rgb[j] = m->gatherers[g]->surface->reflectivity[j] * shotPower[j] * deltaFormFactors[i];
+            m->gatherers[g]->radiosity[j] += rgb[j] / m->gatherers[g]->area;
         }
-
-        for (int i = 0; i < 3; ++i)
-        {
-            m->gatherers[g]->shooter->unshotPower[i] += m->gatherers[g]->radiosity[i];
+        for (int j = 0; j < 3; ++j) {
+            m->gatherers[g]->shooter->unshotPower[j] += rgb[j];
         }
     }
 }
