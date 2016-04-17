@@ -212,14 +212,18 @@ static void PreComputeTopFaceDeltaFormFactors( float deltaFormFactors[], int num
     /**********************************************************
      ****************** WRITE YOUR CODE HERE ******************
      **********************************************************/
-    for (int y = 0; y < numPixelsOnWidth; ++y)
+    float patchWidth = (1 / numPixelsOnWidth);
+    float x, y;
+    float deltaArea = pow(patchWidth, 2);
+    for (int j = 0; j < numPixelsOnWidth; ++j)
     {
-        for (int x = 0; x < numPixelsOnWidth; ++x)
+        for (int i = 0; i < numPixelsOnWidth; ++i)
         {
-            deltaFormFactors[x + (numPixelsOnWidth * y)] = 0;
+            x = -1 + (i / numPixelsOnWidth);
+            y = -1 + (j / numPixelsOnWidth);
+            deltaFormFactors[i + (numPixelsOnWidth * j)] = deltaArea / (M_PI * pow(pow(x,2) + pow(y,2) + 1, 2));
         }
     }
-
 }
 
 
@@ -233,11 +237,17 @@ static void PreComputeSideFaceDeltaFormFactors( float deltaFormFactors[], int nu
     /**********************************************************
      ****************** WRITE YOUR CODE HERE ******************
      **********************************************************/
-    for (int y = 0; y < numPixelsOnWidth / 2; ++y) {
-        for (int x = 0; x < numPixelsOnWidth; ++x) {
-            deltaFormFactors[x + (numPixelsOnWidth * y)] = 0;
-        }
-    }
+    float y, z;
+	float patchWidth = 1 / numPixelsOnWidth;
+	double deltaArea = pow(patchWidth, 2) ;
+
+	for(int j = 0; j < numPixelsOnWidth / 2; ++j) {
+		for(int i = 0; i < numPixelsOnWidth; ++i) {
+			y = -1.0 + i / numPixelsOnWidth;
+			z = j / numPixelsOnWidth;
+			deltaFormFactors[i + (numPixelsOnWidth * j)] = deltaArea * z / (M_PI * pow(pow(y, 2) + pow(z, 2) + 1, 2));
+		}
+	}
 }
 
 
