@@ -212,42 +212,47 @@ static void PreComputeTopFaceDeltaFormFactors( float deltaFormFactors[], int num
     /**********************************************************
      ****************** WRITE YOUR CODE HERE ******************
      **********************************************************/
-    float patchWidth = (1 / numPixelsOnWidth);
-    float x, y;
-    float deltaArea = pow(patchWidth, 2);
-    for (int j = 0; j < numPixelsOnWidth; ++j)
+    double patchWidth = 1.0 / numPixelsOnWidth;
+
+    // Delta form factor is computed on [-1,1] instead of [0,1]
+    // So the patchWidth need to be double scaled
+    double scaledPatchWidth = 2.0 / numPixelsOnWidth;
+
+    double differentialArea = 1 / pow(numPixelsOnWidth, 2);
+    int i = 0;
+    for (double y = -1.0 + patchWidth; y < 1; y+= scaledPatchWidth)
     {
-        for (int i = 0; i < numPixelsOnWidth; ++i)
+        for (double x = -1.0 + patchWidth; x < 1; x+= scaledPatchWidth)
         {
-            x = -1 + (i / numPixelsOnWidth);
-            y = -1 + (j / numPixelsOnWidth);
-            deltaFormFactors[i + (numPixelsOnWidth * j)] = deltaArea / (M_PI * pow(pow(x,2) + pow(y,2) + 1, 2));
+            deltaFormFactors[i] = differentialArea / (M_PI * pow(pow(x,2) + pow(y,2) + 1, 2));
+            ++i;
         }
     }
 }
 
-
-
-static void PreComputeSideFaceDeltaFormFactors( float deltaFormFactors[], int numPixelsOnWidth )
-    // Pre-compute the delta form factors on a side face of the hemicube.
-    // The results are stored in the 1-D array deltaFormFactors[] of 
-    // size of [(numPixelsOnWidth/2) x numPixelsOnWidth] elements.
-    // Note that numPixelsOnWidth must be a even number.
+static void PreComputeSideFaceDeltaFormFactors(float deltaFormFactors[], int numPixelsOnWidth)
+// Pre-compute the delta form factors on a side face of the hemicube.
+// The results are stored in the 1-D array deltaFormFactors[] of 
+// size of [(numPixelsOnWidth/2) x numPixelsOnWidth] elements.
+// Note that numPixelsOnWidth must be a even number.
 {
     /**********************************************************
-     ****************** WRITE YOUR CODE HERE ******************
-     **********************************************************/
-    float y, z;
-	float patchWidth = 1 / numPixelsOnWidth;
-	double deltaArea = pow(patchWidth, 2) ;
+    ****************** WRITE YOUR CODE HERE ******************
+    **********************************************************/
+    double patchWidth = 1.0 / numPixelsOnWidth;
 
-	for(int j = 0; j < numPixelsOnWidth / 2; ++j) {
-		for(int i = 0; i < numPixelsOnWidth; ++i) {
-			y = -1.0 + i / numPixelsOnWidth;
-			z = j / numPixelsOnWidth;
-			deltaFormFactors[i + (numPixelsOnWidth * j)] = deltaArea * z / (M_PI * pow(pow(y, 2) + pow(z, 2) + 1, 2));
-		}
-	}
+    // Delta form factor is computed on [-1,1] instead of [0,1]
+    // So the patchWidth need to be double scaled
+    double scaledPatchWidth = 2.0 / numPixelsOnWidth;
+
+    double differentialArea = 1 / pow(numPixelsOnWidth, 2);
+    int i = 0;
+    for (double z = 0 + patchWidth; z < 1; z += scaledPatchWidth) {
+        for (double x = -1.0 + patchWidth; x < 1; x += scaledPatchWidth) {
+            deltaFormFactors[i] = (differentialArea * z) / (M_PI * pow(pow(x, 2) + pow(z, 2) + 1, 2));
+            ++i;
+        }
+    }
 }
 
 
