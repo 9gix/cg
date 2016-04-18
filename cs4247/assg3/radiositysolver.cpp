@@ -40,7 +40,7 @@ static const float maxGathererQuadEdgeLength = 30.0f;
 
 // This value tells when to terminate the progressive refinement radiosity computation.
 // It sets the maximum number of iterations.
-static const int maxIterations = 10;
+static const int maxIterations = 250;
 
 
 /**********************************************************
@@ -218,7 +218,7 @@ static void PreComputeTopFaceDeltaFormFactors( float deltaFormFactors[], int num
     // So the patchWidth need to be double scaled
     double scaledPatchWidth = 2.0 / numPixelsOnWidth;
 
-    double differentialArea = 1 / pow(numPixelsOnWidth, 2);
+    double differentialArea = 4 / pow(numPixelsOnWidth, 2);
     int i = 0;
     for (double y = -1.0 + patchWidth; y < 1; y+= scaledPatchWidth)
     {
@@ -245,7 +245,7 @@ static void PreComputeSideFaceDeltaFormFactors(float deltaFormFactors[], int num
     // So the patchWidth need to be double scaled
     double scaledPatchWidth = 2.0 / numPixelsOnWidth;
 
-    double differentialArea = 1 / pow(numPixelsOnWidth, 2);
+    double differentialArea = 4 / pow(numPixelsOnWidth, 2);
     int i = 0;
     for (double z = 0 + patchWidth; z < 1; z += scaledPatchWidth) {
         for (double x = -1.0 + patchWidth; x < 1; x += scaledPatchWidth) {
