@@ -50,6 +50,8 @@ static const int maxIterations = 250;
  * TO TERMINATE THE RADIOSITY COMPUTATION.
  **********************************************************/
 
+// Stop the iteration if the Length of UnshotPower below this threshold
+static const float powerThreshold = 1100;
 
 
 
@@ -213,18 +215,19 @@ static void PreComputeTopFaceDeltaFormFactors( float deltaFormFactors[], int num
      ****************** WRITE YOUR CODE HERE ******************
      **********************************************************/
     double patchWidth = 1.0 / numPixelsOnWidth;
+    double hemiCubeLength = 2.0;
 
     // Delta form factor is computed on [-1,1] instead of [0,1]
     // So the patchWidth need to be double scaled
-    double scaledPatchWidth = 2.0 / numPixelsOnWidth;
+    double scaledPatchWidth = hemiCubeLength / numPixelsOnWidth;
 
-    double differentialArea = 4 / pow(numPixelsOnWidth, 2);
+    double areaOfPixel = pow(hemiCubeLength, 2) / pow(numPixelsOnWidth, 2);
     int i = 0;
-    for (double y = -1.0 + patchWidth; y < 1; y+= scaledPatchWidth)
+    for (double y = -1.0 + patchWidth; y < 1; y+= scaledPatchWidth) // y ranges (-1, 1)
     {
-        for (double x = -1.0 + patchWidth; x < 1; x+= scaledPatchWidth)
+        for (double x = -1.0 + patchWidth; x < 1; x+= scaledPatchWidth) // x ranges (-1, 1)
         {
-            deltaFormFactors[i] = differentialArea / (M_PI * pow(pow(x,2) + pow(y,2) + 1, 2));
+            deltaFormFactors[i] = areaOfPixel / (M_PI * pow(pow(x,2) + pow(y,2) + 1, 2));
             ++i;
         }
     }
@@ -240,16 +243,18 @@ static void PreComputeSideFaceDeltaFormFactors(float deltaFormFactors[], int num
     ****************** WRITE YOUR CODE HERE ******************
     **********************************************************/
     double patchWidth = 1.0 / numPixelsOnWidth;
+    double hemiCubeLength = 2.0;
 
-    // Delta form factor is computed on [-1,1] instead of [0,1]
-    // So the patchWidth need to be double scaled
-    double scaledPatchWidth = 2.0 / numPixelsOnWidth;
+    // Hemicube x:=[-1,1] y:=[-1,1] z:=[0,1]
+    double scaledPatchWidth = hemiCubeLength / numPixelsOnWidth;
 
-    double differentialArea = 4 / pow(numPixelsOnWidth, 2);
+    double areaOfPixel = pow(hemiCubeLength, 2) / pow(numPixelsOnWidth, 2);
     int i = 0;
-    for (double z = 0 + patchWidth; z < 1; z += scaledPatchWidth) {
-        for (double x = -1.0 + patchWidth; x < 1; x += scaledPatchWidth) {
-            deltaFormFactors[i] = (differentialArea * z) / (M_PI * pow(pow(x, 2) + pow(z, 2) + 1, 2));
+    for (double z = 0 + patchWidth; z < 1; z += scaledPatchWidth) // z ranges between (0, 1)
+    {
+        for (double y = -1.0 + patchWidth; y < 1; y += scaledPatchWidth) // y ranges between (-1, 1)
+        {
+            deltaFormFactors[i] = (areaOfPixel * z) / (M_PI * pow(pow(y, 2) + pow(z, 2) + 1, 2));
             ++i;
         }
     }
@@ -266,12 +271,22 @@ static void SetupHemicubeTopView( const QM_ShooterQuad *shooterQuad, float nearP
     /**********************************************************
      ****************** WRITE YOUR CODE HERE ******************
      **********************************************************/
+
+    // ================ //
+    // Setup Viewport   //
+    // ================ //
     glViewport(0, 0, winWidthHeight, winWidthHeight);
 
+    // ================ //
+    // Setup Projection //
+    // ================ //
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-nearPlane, nearPlane, -nearPlane, nearPlane, nearPlane, farPlane);
 
+    // ================ //
+    // Setup View Model //
+    // ================ //
     float tangent[3];
     VecDiff(tangent, shooterQuad->v[0], shooterQuad->v[1]);
 
@@ -295,12 +310,21 @@ static void SetupHemicubeSideView( int face, const QM_ShooterQuad *shooterQuad, 
     /**********************************************************
      ****************** WRITE YOUR CODE HERE ******************
      **********************************************************/
+    // ================ //
+    // Setup Viewport   //
+    // ================ //
     glViewport(0, 0, winWidthHeight, winWidthHeight/2);
 
+    // ================ //
+    // Setup Projection //
+    // ================ //
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-nearPlane, nearPlane, 0, nearPlane, nearPlane, farPlane);
 
+    // ================ //
+    // Setup View Model //
+    // ================ //
     float tangent[3];
     switch (face) {
     case 1: VecDiff(tangent, shooterQuad->v[0], shooterQuad->v[1]); break;
@@ -340,10 +364,14 @@ static void UpdateRadiosities( const QM_Model *m, const float shotPower[3], cons
          ****************** WRITE YOUR CODE HERE ******************
          **********************************************************/
         float rgb[3];
+
+        // Increment the Gatherer's radiosity given by the current shooter
         for (int j = 0; j < 3; ++j) {
             rgb[j] = m->gatherers[g]->surface->reflectivity[j] * shotPower[j] * deltaFormFactors[i];
             m->gatherers[g]->radiosity[j] += rgb[j] / m->gatherers[g]->area;
         }
+
+        //  Increment the Gatherer's Unshot Power given by the current shooter
         for (int j = 0; j < 3; ++j) {
             m->gatherers[g]->shooter->unshotPower[j] += rgb[j];
         }
@@ -378,9 +406,12 @@ static void ComputeRadiosity( void )
          * RADIOSITY COMPUTATION.
          **********************************************************/
 
-        // TODO: terminate if the greatest unshot power is below a threshold
-        
-
+        // Terminate if the length of unshot power below the given threshold
+        if (VecLen(unshotPower) < powerThreshold)
+        {
+            printf("unshot length %f is below threshold.\n", VecLen(unshotPower));
+            break;
+        }
 
 
 
